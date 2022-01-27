@@ -2,10 +2,14 @@
 # -*- coding: utf-8 -*-
 """
 Created on Thu Jun 10 08:58:59 2021
-
-Questo script analizza tutti idem all'interno della cartella,
+INPUT: DEM provenienti dal rilievo laser in canaletta. I DEM devo essere in
+formato ASCII GRID, preventivamente "detrendizzati" della pendenza di spianatura.
+Quest'ultima operazione è svolta dallo script f90.
+Il presente script analizza tutti i DEM all'interno della cartella,
 ne valuta l'andamento delle quote lungo l'asse longitudinale e ne
-calcola la pendenza residua.
+calcola la pendenza residua.Questa è da intendersi residua rispetto alla
+pendenza di partenza, già sottratta in fase di detrend.
+
 Per l'applicazione del modell di Engelund il calcolo della sezione equivalente
 cviene effettuato su un DEM detrended, a cui è stata tolta la pendenza residua.
 Plotta la adistribuzione di frequenza dei valori di quota.
@@ -30,7 +34,7 @@ input_dir = os.path.join(w_dir, 'surveys')
 files=[]
 for f in sorted(os.listdir(input_dir)):
     path = os.path.join(input_dir, f)
-    if os.path.isfile(path) and f.startswith('matrix_bed_norm') and f.endswith('.txt'):
+    if os.path.isfile(path) and f.startswith('matrix_bed_norm_q07') and f.endswith('.txt'):
         files = np.append(files, f)
 
 # Set output plot directory
@@ -50,7 +54,7 @@ array_msk_nan = np.where(np.logical_not(np.isnan(mask0)), 1, np.nan)
 
 slope = []
 # For single DEM run, set files
-# files = ['matrix_bed_norm_q10S0.txt']
+# files = ['matrix_bed_norm_q07s0.txt']
 # files loop stars here
 for f in files:
     path = os.path.join(input_dir, f)
@@ -88,6 +92,7 @@ for f in files:
     fs = 10 # Font Size x grafici
     teta_c = 0.02 # [-] Shields parameter 0.03 0.035 0.040
     ds = 0.001 # [m] Sediment diameter
+    #TODO Check discharge
     Q_ref = float(f[17:19])/10000 # reading Q value from DEM name
     print('Run discharge [m**3/s]: ', Q_ref)
     W = 0.6 # Channel width [m]
@@ -134,7 +139,7 @@ for f in files:
     ax1.plot(x_coord, sect_mean_detrend)
     ax1.plot(x_coord, x_coord*linear_model_detrend[0]+linear_model_detrend[1], color='green')
     ax1.set(xlabel='longitudinal coordinate (mm)', ylabel='Z (mm)',
-           title=str(f[16:21])+'\n'+'Residual slope detrended:'+str(linear_model_detrend[0]))
+           title=str(f[16:21])+'\n'+'Residual slope after detrend:'+str(linear_model_detrend[0]))
 
     # Slope after detrending
     slope_detrend = np.append(slope, linear_model[0])
@@ -238,7 +243,8 @@ for f in files:
         #Yc_ana = (Q[n]**2/(g*b[n]**2))**(1/3)
 # TODO implementare metodo bisezione
         if abs(Q_ref-Q[n]) < tol_Q or Q[n]>Q_ref:
-            print('Q_ref reached: ', Q[n])
+            print('Q_ref reached [m**3/s]: ', Q[n])
+            print('Y reached [m]', Y[n])
             break
 
     # Resize arrays
