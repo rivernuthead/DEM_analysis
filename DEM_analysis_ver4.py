@@ -47,11 +47,13 @@ else:
 # array mask for filtering data outside the channel domain
 # TODO Verify shape and masking properties of the mask
 array_mask, array_mask_path = 'array_mask.txt', w_dir
-mask0 = np.loadtxt(os.path.join(array_mask_path, array_mask), skiprows=8)
+mask0 = np.loadtxt(os.path.join(array_mask_path, array_mask))
 array_msk = np.where(np.isnan(mask0), 0, 1)
 array_msk_nan = np.where(np.logical_not(np.isnan(mask0)), 1, np.nan)
 
-
+# Initialize arrays
+BRI_mean_array=[]
+SD_eta_array = []
 slope = []
 # For single DEM run, set files
 # files = ['matrix_bed_norm_q07s0.txt']
@@ -271,7 +273,27 @@ for f in files:
     # print('W_active = ', W_active*W, 'm')
     # print('W_Active/W = ', W_active)
     print('Wwet/w ', W_wet, 'Wactive/W ', W_active)
-
+    
+    # Calculate bed relief index
+    # BRI as mean(stdev(eta_sect)) calculated as the mean of the standard deviation per each cross section
+    BRI = []
+    for k in range(0,DEM_msk.shape[1]):
+        BRI = np.append(BRI, np.nanstd(DEM_msk[:,i]))
+    BRI_mean = np.mean(BRI)
+    
+    # SD_eta calculated as the standard deviation of the entire DEM
+    SD_eta = np.nanstd(DEM_msk)
+    
+    print('Bed Relief Index (BRI): ', BRI_mean)
+    print('SD(eta): ', SD_eta)
+    
+    print()
+    print()
+    
+    # Build up bed relief measurements arrays
+    BRI_mean_array = np.append(BRI_mean_array, BRI_mean)    
+    SD_eta_array = np.append(SD_eta_array, SD_eta)
+    
 
 # TODO Complete results print to .txt
 # Save results
