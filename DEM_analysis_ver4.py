@@ -25,6 +25,8 @@ import matplotlib.pyplot as plt
 from pyEngelund_chezy import *
 
 # Script parameters:
+run = 'q20'
+
 nan = -999
 
 
@@ -34,7 +36,7 @@ input_dir = os.path.join(w_dir, 'surveys')
 files=[]
 for f in sorted(os.listdir(input_dir)):
     path = os.path.join(input_dir, f)
-    if os.path.isfile(path) and f.startswith('matrix_bed_norm_q07') and f.endswith('.txt'):
+    if os.path.isfile(path) and f.startswith('matrix_bed_norm_'+run+'s') and f.endswith('.txt'):
         files = np.append(files, f)
 
 # Set output plot directory
@@ -42,6 +44,13 @@ if os.path.exists(os.path.join(w_dir, 'plots')):
     pass
 else:
     os.mkdir(os.path.join(w_dir, 'plots'))
+    
+# Set output report directory
+path_report = os.path.join(w_dir, 'report')
+if os.path.exists(path_report):
+    pass
+else:
+    os.mkdir(path_report)
 
 
 # array mask for filtering data outside the channel domain
@@ -278,7 +287,7 @@ for f in files:
     # BRI as mean(stdev(eta_sect)) calculated as the mean of the standard deviation per each cross section
     BRI = []
     for k in range(0,DEM_msk.shape[1]):
-        BRI = np.append(BRI, np.nanstd(DEM_msk[:,i]))
+        BRI = np.append(BRI, np.nanstd(DEM_msk[:,k]))
     BRI_mean = np.mean(BRI)
     
     # SD_eta calculated as the standard deviation of the entire DEM
@@ -293,7 +302,12 @@ for f in files:
     # Build up bed relief measurements arrays
     BRI_mean_array = np.append(BRI_mean_array, BRI_mean)    
     SD_eta_array = np.append(SD_eta_array, SD_eta)
-    
+
+# Create bed relief matrix report
+BRI_report_header = 'Bed Relief Index (BRI), SD(eta)'
+BRI_report_matrix = np.transpose(np.vstack((BRI_mean_array, SD_eta_array)))
+# Save report
+np.savetxt(os.path.join(path_report, run+'_BRI_report.txt'), BRI_report_matrix, fmt='%.3f', delimiter=',', header=BRI_report_header)
 
 # TODO Complete results print to .txt
 # Save results
